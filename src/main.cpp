@@ -23,7 +23,7 @@ int main()
 	authorText.setFont(mainFont);
 	authorText.setCharacterSize(18);
 	authorText.setFillColor(config::AUTHOR_TEXT_COLOR);
-	authorText.setPosition(window.getSize().x - 195, 0);
+	authorText.setPosition(5, 5);
 
 	window.setKeyRepeatEnabled(false);
 	
