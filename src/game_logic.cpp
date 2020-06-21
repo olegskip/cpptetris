@@ -1,20 +1,29 @@
-#include "gamelogic.h"
+#include "game_logic.h"
 
-#include <random>
 #include <time.h>
+#include <random>
 
 GameLogic::GameLogic()
 {
-	//init cells
+	blocksSceletons.insert({BlocksTypes::tBlock, config::tBlock});
+	blocksSceletons.insert({BlocksTypes::oBlock, config::oBlock});
+	blocksSceletons.insert({BlocksTypes::lBlock, config::lBlock});
+	blocksSceletons.insert({BlocksTypes::jBlock, config::jBlock});
+	blocksSceletons.insert({BlocksTypes::iBlock, config::iBlock});
+	blocksSceletons.insert({BlocksTypes::zBlock, config::zBlock});
+	blocksSceletons.insert({BlocksTypes::sBlock, config::sBlock});
 
-	for(int x = 0; x < config::CELLS_COUNT.x; ++x) {
+	// init cells
+	for(size_t x = 0; x < config::CELLS_COUNT.x; ++x) {
 		cells.push_back(std::vector<std::shared_ptr<Cell>>());
 		for(int y = 0; y < config::CELLS_COUNT.y; ++y) {
-			cells[x].push_back(std::shared_ptr<Cell>(new Cell((x * 2) + (x * config::CELL_SISE), (y * 2) + (y * config::CELL_SISE), 
-				config::CELL_SISE, sf::Color::Red, sf::Vector2f(x, y))));
+			cells[x].push_back(std::make_shared<Cell>((x * 2) + (x * config::CELL_SISE), (y * 2) + (y * config::CELL_SISE), 
+				config::CELL_SISE, sf::Vector2f(x, y)));
 		}
 	}
-	updateThread.detach();
+
+	std::thread(&GameLogic::update, this).detach();
+
 	spawnNewItem();
 }
 
@@ -124,20 +133,20 @@ void GameLogic::setBlockStatus()
 {
 	if(isPause) return;
 	const int startBlockStatus = currentBlockStatus;
-	if(++currentBlockStatus > config::blocks[static_cast<int>(currentBlock)].size() - 1)
+	if(++currentBlockStatus > blocksSceletons.find(currentBlockType)->second.size() - 1)
 		currentBlockStatus = 0;
 
 	sf::Vector2f pos;
 	pos = activeCells[0]->position;
 	// check for not to let get out of the game scene a part of a figure
-	for(auto cell: config::blocks[static_cast<int>(currentBlock)][currentBlockStatus]) {
+	for(auto cell: blocksSceletons.find(currentBlockType)->second[currentBlockStatus]) {
 		if(cell.x + pos.x < 0 || cell.x + pos.x >= cells.size() || cell.y + pos.y >= cells[0].size()) {
 			currentBlockStatus = startBlockStatus;
 			return;
 		}
 	}
 
-	for(auto cell: config::blocks[static_cast<int>(currentBlock)][currentBlockStatus]) {
+	for(auto cell: blocksSceletons.find(currentBlockType)->second[currentBlockStatus]) {
 		for(auto &doneCell: doneCells) {
 			if(cell.x + pos.x == doneCell->position.x && cell.y + pos.y == doneCell->position.y) {
 				currentBlockStatus = startBlockStatus;
@@ -147,7 +156,7 @@ void GameLogic::setBlockStatus()
 	}	
 
 	activeCells.clear();
-	for(auto cell: config::blocks[static_cast<int>(currentBlock)][currentBlockStatus])
+	for(auto cell: blocksSceletons.find(currentBlockType)->second[currentBlockStatus])
 		activeCells.push_back(cells[cell.x + pos.x][cell.y + pos.y]);
 }
 
@@ -157,10 +166,10 @@ void GameLogic::spawnNewItem()
 	currentBlockStatus = 0;
 
 	currentColor = config::CELL_COLORS[getRandomInt(0, config::CELL_COLORS.size() - 1)];
-	int randomFigureIndex = getRandomInt(0, config::blocks.size() - 1);
+	int randomFigureIndex = getRandomInt(0, std::distance(blocksSceletons.begin(), blocksSceletons.end()) - 1);
 
-	currentBlock = randomFigureIndex;
-	for(auto cell: config::blocks[currentBlock].front())
+	currentBlockType = static_cast<BlocksTypes>(randomFigureIndex);
+	for(auto cell: blocksSceletons.find(currentBlockType)->second.front())
 		activeCells.push_back(cells[cell.x + config::SPAWN_POSITION.x][cell.y + config::SPAWN_POSITION.y]);
 
 	// if the spawn is blocked
@@ -179,8 +188,8 @@ void GameLogic::gameOver()
 {
 	std::copy(activeCells.begin(), activeCells.end(), std::back_inserter(doneCells));
 	activeCells.clear();
-	for(int y = 0; y < cells[0].size(); ++y) {
-		for(int x = 0; x < cells.size(); ++x) {
+	for(size_t y = 0; y < cells[0].size(); ++y) {
+		for(size_t x = 0; x < cells.size(); ++x) {
 			if(std::find(doneCells.begin(), doneCells.end(), cells[x][y]) == doneCells.end())
 				cells[x][y]->activeColor = sf::Color::Transparent;
 		}
@@ -189,16 +198,16 @@ void GameLogic::gameOver()
 	const sf::Color randomColor = config::CELL_COLORS[getRandomInt(0, config::CELL_COLORS.size() - 1)];
 
 	std::thread([=]{
-		for(int y = 0; y < cells[0].size() / 2; ++y) {
-			for(int x = 0; x < cells.size(); ++x) {
+		for(size_t y = 0; y < cells[0].size() / 2; ++y) {
+			for(size_t x = 0; x < cells.size(); ++x) {
 				cells[x][y]->activeColor = randomColor;
 			}
 			sf::sleep(sf::milliseconds(50));
 		}
 	}).detach();
 
-	for(int y = cells[0].size() - 1; y >= cells[0].size() / 2; --y) {
-		for(int x = 0; x < cells.size(); ++x) {
+	for(size_t y = cells[0].size() - 1; y >= cells[0].size() / 2; --y) {
+		for(size_t x = 0; x < cells.size(); ++x) {
 			cells[x][y]->activeColor = randomColor;
 		}
 		sf::sleep(sf::milliseconds(50));
@@ -241,8 +250,8 @@ void GameLogic::draw(sf::RenderWindow &window)
 		cell->draw(window);
 		
 	if(isGameOver) {
-		for(int x = 0; x < cells.size(); ++x) {
-			for(int y = 0; y < cells[0].size(); ++y)
+		for(size_t x = 0; x < cells.size(); ++x) {
+			for(size_t y = 0; y < cells[0].size(); ++y)
 				cells[x][y]->draw(window);
 		}
 	}
@@ -266,7 +275,7 @@ void GameLogic::checkIfRowFulled(int row)
 			rowCellsCount++;
 	}
 
-	if(rowCellsCount == cells.size()) {
+	if(rowCellsCount == int(cells.size())) {
 		for(int i = doneCells.size() - 1; i >= 0; --i) {
 			if(doneCells[i]->position.y == cells[0].size() - 1) {
 				doneCells.erase(doneCells.begin() + i);
@@ -281,7 +290,7 @@ void GameLogic::moveDownTopCells(int row)
 {
 	auto doneCellsTemp = doneCells;
 	doneCells.clear();
-	for(int y = row; y > 0; --y) {
+	for(size_t y = row; y > 0; --y) {
 		for(auto &cell: doneCellsTemp) {
 			if(cell->position.y == y) {
 				doneCells.push_back(cells[cell->position.x][cell->position.y + 1]);

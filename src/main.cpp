@@ -1,4 +1,4 @@
-#include "gamelogic.h"
+#include "game_logic.h"
 #include "config.h"
 
 
@@ -19,7 +19,7 @@ int main()
 		return EXIT_FAILURE;
 
 	sf::Text authorText;
-	authorText.setString("Programmer: Oleg Skip\nDesigner: Zahar Sydoryk");
+	authorText.setString("Programmer: Oleg Skip\nDesigner: Zahar Sydoryk;\nGithub: olegskip/cpptestris;");
 	authorText.setFont(mainFont);
 	authorText.setCharacterSize(18);
 	authorText.setFillColor(config::AUTHOR_TEXT_COLOR);

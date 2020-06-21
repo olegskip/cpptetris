@@ -1,9 +1,10 @@
 #pragma once
-
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <vector>
 #include <string>
+#include <unordered_map>
+
 
 namespace config
 {
@@ -17,7 +18,7 @@ namespace config
 	const std::vector<sf::Color> CELL_COLORS = {sf::Color(230, 235, 235), sf::Color(50, 150, 50), sf::Color(220, 35, 35),
 											    sf::Color(80, 100, 220), sf::Color(250, 220, 70), sf::Color(20, 190, 160)};
 
-	const sf::Vector2f SPAWN_POSITION = sf::Vector2f(6, 5);
+	const sf::Vector2f SPAWN_POSITION = sf::Vector2f(CELLS_COUNT.x / 2 - 1, 5);
 
 	const std::string ICON_PATH = "data/author.png";
 	const std::string MAIN_FONT = "data/pixeboy.ttf";
@@ -95,9 +96,5 @@ namespace config
 		std::vector<sf::Vector2f> {
 			sf::Vector2f(0, -2), sf::Vector2f(0, -1), sf::Vector2f(1, -1), sf::Vector2f(1, 0)
 		}
-	};
-
-	const std::vector<std::vector<std::vector<sf::Vector2f>>> blocks = {
-		tBlock, oBlock, lBlock, jBlock, iBlock, zBlock, sBlock
 	};
 }

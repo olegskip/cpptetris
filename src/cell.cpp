@@ -3,7 +3,8 @@
 #include <random>
 #include <time.h>
 
-Cell::Cell(int x, int y, int sideSize, sf::Color color, sf::Vector2f pos): position(pos)
+Cell::Cell(int x, int y, int sideSize, sf::Vector2f pos): 
+	position(pos)
 {
     activeColor = sf::Color(90, 180, 90);
 

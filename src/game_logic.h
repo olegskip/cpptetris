@@ -1,11 +1,15 @@
 #pragma once
-
 #include <SFML/Graphics.hpp>
 #include <list>
 #include <thread>
 
 #include "cell.h"
 
+
+enum BlocksTypes
+{
+	tBlock, oBlock, lBlock, jBlock, iBlock, zBlock, sBlock
+};
 
 class GameLogic
 {
@@ -35,12 +39,11 @@ private:
 	std::vector<std::shared_ptr<Cell>> activeCells;
 	std::vector<std::shared_ptr<Cell>> doneCells;
 
-	std::thread updateThread = std::thread(&GameLogic::update, this);
-
 	bool isGameOver = false;
 	bool isPause = false;
-	int currentBlockStatus = 0;
-	int currentBlock;
+	unsigned int currentBlockStatus = 0;
+	BlocksTypes currentBlockType;
+	std::unordered_map<BlocksTypes, std::vector<std::vector<sf::Vector2f>>> blocksSceletons;
 	sf::Color currentColor;
 
 	int getRandomInt(int from, int to);
